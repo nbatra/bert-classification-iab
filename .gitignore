@@ -1,0 +1,43 @@
+# Config (contains AWS account ID -- use config.json.template)
+config.json
+artifacts/
+
+# Virtual environment
+.venv/
+
+# Data (too large for git -- regenerate via notebooks/scripts)
+data/*
+!data/sample/
+
+# Models (too large for git -- regenerate via notebooks)
+models/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+nohup.out
+*.log
+
+# Temporary
+*.tmp
+.cache/
