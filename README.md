@@ -6,7 +6,7 @@
 [![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-F37626?logo=jupyter&logoColor=white)](https://jupyter.org)
 [![License](https://img.shields.io/badge/License-Educational-green)](LICENSE)
 
-**Keywords:** `IAB Content Taxonomy` `Knowledge Distillation` `Domain Classification` `LLM Labels` `TF-IDF` `LinearSVC` `E5 Embeddings` `Sentence Transformers` `ModernBERT` `Soft Labels` `KL Divergence` `Label Correction` `AdTech` `Programmatic Advertising` `Multi-class Classification` `Text Classification` `NLP` `Real-time Inference` `Production ML` `AWS Bedrock`
+**Keywords:** `IAB Content Taxonomy` `Knowledge Distillation` `Domain Classification` `Website Classification` `LLM Labeling` `Claude` `TF-IDF` `LinearSVC` `SVM` `E5 Embeddings` `Sentence Transformers` `ModernBERT` `Soft Labels` `KL Divergence` `Label Correction` `Label Noise` `Teacher-Student` `AdTech` `Programmatic Advertising` `Contextual Targeting` `Brand Safety` `Multi-class Classification` `Text Classification` `NLP` `scikit-learn` `PyTorch` `Real-time Inference` `Production ML` `AWS Bedrock` `Content Categorization` `URL Classification` `Noisy Labels` `Data Quality`
 
 > Developed and trained entirely on a MacBook M4 Max (64GB RAM, MPS acceleration). The full pipeline -- from LLM data correction (97K domains) through embedding generation and model training -- completes in under 5 hours. The LLM labeling runs asynchronously via AWS Bedrock while all model training (TF-IDF, MLP distillation, ModernBERT fine-tuning) fits within Apple Silicon's memory budget. The compute constraint mirrors production economics: the best model turns out to be the simplest one.
 
