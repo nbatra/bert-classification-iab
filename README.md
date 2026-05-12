@@ -13,7 +13,7 @@
 
 Production URL classification in adtech has historically relied on sparse NLP pipelines -- TF-IDF over crawler-extracted keywords from page content, trained on programmatically generated features. That architecture (advanced web crawlers feeding keyword extraction into TF-IDF + SVM classifiers) shipped in 2018 and still powers real-time bidding decisions at scale. **This project asks: what changes when you replace the crawler-based keyword extraction with frontier LLMs as the feature generation engine, and can modern dense representations (transformer encoders, knowledge distillation from billion-parameter teachers) outperform the classical sparse pipeline when scaled beyond this research dataset?**
 
-On this dataset and compute budget, TF-IDF on LLM-generated keywords achieves the highest accuracy -- but this is a property of the scale constraint, not a general architectural conclusion. With production-scale training data (millions of domains), higher-capacity encoders (GTE-ModernBERT 768-dim, Matryoshka representations), and proper GPU infrastructure for exhaustive hyperparameter search, dense representations and fine-tuned transformers are expected to close and surpass this gap. The project demonstrates the full pipeline architecture that enables that scaling.
+On this dataset and compute budget, fine-tuned ModernBERT (91.7%) and TF-IDF + LinearSVC (91.6%) achieve near-identical top-1 accuracy -- the transformer matches the sparse baseline even on just 78K training domains. With production-scale training data (millions of domains), higher-capacity encoders (GTE-ModernBERT 768-dim, Matryoshka representations), and proper GPU infrastructure for exhaustive hyperparameter search, fine-tuned transformers are expected to surpass the sparse ceiling. The project demonstrates the full pipeline architecture that enables that scaling.
 
 We implement a complete **LLM-as-data-engine pipeline** on the [Kaggle Website IAB Categorization](https://www.kaggle.com/datasets/bpmtips/websiteiabcategorization) dataset (98K domains, 27 IAB Tier-1 categories) -- programmatic label synthesis, soft-label knowledge distillation, sentence-transformer embedding generation, and multi-architecture downstream training. The pipeline discovers that **49.7% of crowd-sourced annotations are incorrect**, corrects them via LLM consensus, and then benchmarks four fundamentally different model architectures on the cleaned signal:
 
@@ -24,7 +24,7 @@ We implement a complete **LLM-as-data-engine pipeline** on the [Kaggle Website I
 
 ## Observations at This Scale (98K Domains, Single-Machine Training)
 
-On this dataset, TF-IDF + LinearSVC (91.6% top-1) outperforms the distilled MLP (84.9%) by 6.7 percentage points. This is an artifact of the specific scale and compute constraints of this study -- not a general architectural conclusion.
+On this dataset, fine-tuned ModernBERT (91.7%) and TF-IDF + LinearSVC (91.6%) achieve near-identical top-1 accuracy, both outperforming the distilled MLP (84.9%) by ~6.7 percentage points. The transformer matches the sparse baseline even at this constrained scale -- with more data and compute, it is expected to pull ahead.
 
 The mechanism at this scale is information-theoretic. When an LLM generates keywords like "online store, electronics, gadgets" for an e-commerce domain, those tokens are **already category-aligned features** -- they carry near-maximal mutual information with the target label. TF-IDF with sublinear term frequency and inverse document frequency weighting preserves this discriminative structure: "automotive" receives high IDF weight and maps almost bijectively to "Autos & Vehicles." The LinearSVC's max-margin hyperplane in this 30K-dimensional space (99.9% sparsity, ~70 non-zero features per document) exploits the near-linear separability that the LLM created.
 
@@ -99,12 +99,13 @@ A factored approach that separates deterministic classification (hard labels, ke
 
 | Factor | v1 (noisy labels) | v2 (corrected) | Delta |
 |--------|-------------------|----------------|-------|
+| ModernBERT Top-1 accuracy | 61.3% | 91.7% | +49.6% relative |
 | MLP Top-1 accuracy | 45.1% | 84.9% | +88% relative |
 | MLP Top-3 accuracy | 68.0% | 98.3% | +45% relative |
 | Teacher coverage | 8.4% (6.5K domains) | 42.4% (32.9K domains) | 5.1x |
 | Inter-annotator agreement (LLM-LLM) | 50.9% Kaggle-Opus | 81.7% Sonnet-Opus | +60% |
 
-The v2 MLP (337K params, 1.3 MB) outperforms the v1 ModernBERT (150M params, 602 MB) by 23.6 percentage points. This is the empirical bound on how much model capacity can compensate for supervision noise in classification -- the answer is: almost nothing. A model with 443x fewer parameters trained on clean labels dominates a model trained on noisy labels, regardless of architecture depth or pre-training.
+The v2 ModernBERT (91.7%) trained on corrected labels improves by 30.4 percentage points over its v1 counterpart (61.3%) trained on noisy Kaggle labels -- same architecture, same hyperparameters, only the supervision quality changed. Even the tiny v2 MLP (337K params, 1.3 MB) outperforms the v1 ModernBERT (150M params, 602 MB) by 23.6 percentage points -- confirming that label quality dominates model capacity for classification.
 
 ### Architectural Analysis
 
@@ -128,7 +129,7 @@ Weak performers: Sensitive Subjects (0.000 -- only 3 val samples), Hobbies & Lei
 
 ## Key Findings
 
-1. **Annotation quality dominates model capacity by an order of magnitude.** A 337K-param MLP with LLM-corrected labels outperforms a 150M-param ModernBERT trained on crowd-sourced annotations by 23.6 percentage points (84.9% vs 61.3%). This is a 443x parameter disadvantage overcome purely by supervision quality -- confirming that for classification tasks, the Bayes error rate is set by label noise, not model expressiveness.
+1. **Annotation quality dominates model capacity by an order of magnitude.** v2 ModernBERT (corrected labels) achieves 91.7% vs v1 ModernBERT (noisy labels) at 61.3% -- a 30.4pp improvement from identical architecture with only label quality changed. Even a 337K-param MLP with corrected labels (84.9%) outperforms the 150M-param v1 ModernBERT by 23.6pp. The Bayes error rate for classification is set by label noise, not model expressiveness.
 
 2. **Crowd-sourced taxonomic annotations exhibit catastrophic error rates.** 49.7% of Kaggle labels are incorrect under LLM consensus (Sonnet-Opus inter-annotator agreement: 81.7% vs Kaggle-Opus: 50.9%). The error distribution is systematic, not random: Shopping was undercounted by 104% (e-commerce domains misclassified as Home & Garden, Business & Industrial), and Sensitive Subjects had 99% label error (annotator avoidance bias). This level of systematic noise cannot be overcome by regularization or robust loss functions -- it requires re-annotation.
 
