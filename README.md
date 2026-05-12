@@ -83,9 +83,9 @@ A factored approach that separates deterministic classification (hard labels, ke
 | Model | Val Top-1 | Val Top-3 | Test Top-1 | Macro-F1 | Params | Inference |
 |-------|-----------|-----------|------------|----------|--------|-----------|
 | **TF-IDF + LinearSVC** | **91.6%** | **99.3%** | **91.7%** | **0.880** | ~30K features | 0.02 ms |
+| **ModernBERT (corrected labels)** | **91.7%** | **99.2%** | -- | -- | 150M | ~10 ms |
 | TF-IDF + Logistic Regression | 90.4% | 99.4% | -- | 0.878 | ~30K features | 0.02 ms |
 | MLP (E5 + KL distillation) | 84.9% | 98.3% | -- | 0.814 | 337K | ~1 ms |
-| ModernBERT (corrected labels) | (in progress) | -- | -- | -- | 150M | ~10 ms |
 
 ### v1 Baseline (noisy Kaggle labels, for comparison)
 
