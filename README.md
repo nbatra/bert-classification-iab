@@ -241,15 +241,33 @@ Scripts read all model IDs from this config file. You need AWS Bedrock access wi
 - `keywords`: Sonnet-generated English keywords
 - `text`: enriched text used for classification (domain | title | keywords)
 
-### Data and Model Regeneration
+### What's Included in the Repo
 
-The full `data/` and `models/` directories are excluded from version control due to size (~500MB embeddings, ~600MB ModernBERT checkpoint). To regenerate:
+The repository includes all data and models needed to run notebooks end-to-end, except for files that exceed GitHub's 100MB limit:
 
-1. **Seed data:** Download from [Kaggle](https://www.kaggle.com/datasets/bpmtips/websiteiabcategorization). Place CSV in `data/raw/`.
-2. **LLM correction:** `run_sonnet_correction.py` corrects all 97K domains (checkpoints to `data/corrected/sonnet_checkpoints/`, resumes if interrupted).
-3. **Teacher labels:** `run_teacher_labeling.py` generates Opus soft labels (checkpoints to `data/processed/teacher_checkpoints/`, resumes if interrupted).
-4. **Embeddings:** Notebook 03 generates E5-small-v2 embeddings (~3 min on MPS).
-5. **Models:** Notebook 04 trains MLP (25 sec), Notebook 06 trains TF-IDF (12 sec).
+| Included | Size | Description |
+|----------|------|-------------|
+| `data/corrected/{train,val,test}.parquet` | 55 MB | Full corrected dataset (78K/10K/10K rows) |
+| `data/corrected/embeddings/` | 30 MB | Val/test embeddings + domain indices |
+| `data/processed/teacher_labels.parquet` | 1 MB | Opus soft labels (40,696 domains) |
+| `data/processed/{train,val,test}.parquet` | 34 MB | Original Kaggle splits |
+| `models/student_mlp_v2_best.pt` | 2 MB | Trained MLP (84.9% top-1) |
+| `models/tfidf_v2/` | 20 MB | Trained TF-IDF + LinearSVC (91.6% top-1) |
+
+| Excluded (regenerate) | Size | How to Regenerate |
+|-----------------------|------|-------------------|
+| `data/corrected/embeddings/train_embeddings.npy` | 114 MB | Run notebook `v2/03_embedding_generation.ipynb` (~3 min) |
+| `data/processed/embeddings/train_embeddings.npy` | 114 MB | Run notebook `v1/03_embedding_generation.ipynb` |
+| ModernBERT checkpoints | 600 MB+ | Run notebook `v2/05_modernbert_finetune.ipynb` (~75 min) |
+| LLM checkpoint JSONs | ~500 MB | Run scripts (requires AWS Bedrock access) |
+
+To run the full pipeline after cloning, generate the train embeddings first:
+```bash
+# Generate train embeddings (required for notebook 04 -- MLP distillation)
+.venv/bin/jupyter nbconvert --to notebook --execute notebooks/v2-llm-corrected/03_embedding_generation.ipynb
+```
+
+Notebooks 01-02 (data correction, EDA) and 06 (TF-IDF) run directly on the included parquet files with no additional setup.
 
 ## Future Directions
 
