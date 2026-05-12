@@ -204,8 +204,8 @@ models/
 
 ```bash
 # Clone the repository
-git clone https://github.com/nbatra/bert-classification-iab.git
-cd bert-classification-iab
+git clone https://github.com/nbatra/bert-finetune-iab-classification.git
+cd bert-finetune-iab-classification
 
 # Create environment and install dependencies
 uv venv --python 3.13 .venv
